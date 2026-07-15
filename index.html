@@ -185,8 +185,7 @@
 
    // Mesma chave de segurança do seu painel original
    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlLWRlbW8iLCJpYXQiOjE3ODM2NDg0NzAsImV4cCI6MjA5OTAwODQ3MH0.M1suC6hPN0Tjs8LfpGSgmonUBxy0larehPbQGSEyXVg';
-   const URL_API = window.location.origin + '/api-painel/rest/v1/auditorias?select=*&order=data_auditoria.asc';
-
+   const URL_API = 'https://app.sanesi.online/api-painel/rest/v1/auditorias?select=*&order=data_auditoria.asc';
    // Formatação de moeda
    const fm = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
    const getInitials = (nome) => nome.trim().split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
