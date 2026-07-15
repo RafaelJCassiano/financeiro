@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-br"> 
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Painel Financeiro · Produção TACEs</title>
+   
+   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+   <style>
+       /* MESMAS CORES E IDENTIDADE DO SEU PAINEL ORIGINAL */
+       :root {
+           --bg:       #0d1117;
+           --surface:  #161b22;
+           --surface2: #1c2230;
+           --border:   #2a3142;
+           --border2:  #313d52;
+
+           --blue:    #4f9cf9;
+           --blue-dim:#1e3a5f;
+           --red:     #f97171;
+           --red-dim: #3d1e1e;
+           --amber:   #f9c74f;
+           --amber-dim:#3d3010;
+           --green:   #4ade80;
+           --green-dim:#0f3020;
+           --purple:  #c084fc;
+           --purple-dim:#2d1a45;
+           --cyan:    #22d3ee;
+           --cyan-dim:#0e3b46;
+
+           --text:    #e6edf3;
+           --muted:   #7d8fa8;
+           --faint:   #2f3b4e;
+
+           --radius: 12px;
+           --radius-sm: 8px;
+           --shadow: 0 4px 24px rgba(0,0,0,0.4);
+       }
+
+       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+       body {
+           font-family: 'DM Sans', sans-serif;
+           background: var(--bg);
+           color: var(--text);
+           padding: 24px 20px 60px;
+           min-height: 100vh;
+       }
+
+       body::before {
+           content: '';
+           position: fixed; inset: 0;
+           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+           pointer-events: none; z-index: 0; opacity: 0.4;
+       }
+
+       .container { max-width: 1400px; margin: 0 auto; position: relative; z-index: 1; }
+
+       .header-panel {
+           background: var(--surface); border: 1px solid var(--border);
+           border-radius: var(--radius); padding: 36px 32px;
+           margin-bottom: 24px; position: relative; overflow: hidden;
+       }
+       .header-panel::before {
+           content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+           background: linear-gradient(90deg, var(--green), var(--cyan), var(--blue), var(--green));
+           background-size: 200% 100%; animation: shimmer 4s linear infinite;
+       }
+       @keyframes shimmer { 0%{background-position:0 0} 100%{background-position:200% 0} }
+
+       .header-title {
+           font-size: 1.85rem; font-weight: 800; letter-spacing: -0.5px;
+           background: linear-gradient(135deg, var(--green), var(--cyan));
+           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+           background-clip: text; margin-bottom: 4px;
+       }
+       .header-sub { color: var(--muted); font-size: 0.95rem; margin-bottom: 24px; }
+
+       /* Filtros */
+       .controls-container { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); padding: 14px 18px; border-radius: var(--radius); align-items: flex-end; }
+       .search-input { padding: 10px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; color: var(--text); outline: none; transition: 0.2s; font-family: 'DM Sans', sans-serif; }
+       .search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,156,249,0.12); }
+       
+       .btn-sync {
+           background: linear-gradient(135deg, var(--blue), var(--purple)); color: #fff;
+           border: none; padding: 10px 20px; border-radius: var(--radius-sm);
+           font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+           display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Sans', sans-serif;
+       }
+       .btn-sync:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4); }
+
+       /* Totais */
+       .main-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+       .card {
+           background: var(--surface); border: 1px solid var(--border);
+           border-radius: var(--radius); padding: 24px 20px;
+           position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
+       }
+       .card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+       .card-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 8px; }
+       .card-value { font-family: 'Space Mono', monospace; font-size: 2.2rem; font-weight: 700; line-height: 1; letter-spacing: -1.5px; margin-bottom: 6px; }
+       .card-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; }
+
+       /* Cards Técnicos */
+       .tecnicos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+       .tecnico-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+       .tecnico-header { padding: 14px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.95rem; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+       .tecnico-header-name { display: flex; align-items: center; gap: 10px; }
+       .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--green-dim), var(--cyan-dim)); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--cyan); flex-shrink: 0; font-family: 'Space Mono', monospace; }
+       
+       .tecnico-stats { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg); }
+       .stat-box { padding: 12px 6px; text-align: center; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+       .stat-box:last-child { border-right: none; }
+       .stat-box small { display: block; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 6px; color: var(--muted); }
+       .stat-box b { font-size: 1.15rem; font-family: 'Space Mono', monospace; display: block; margin-bottom: 4px; }
+       .stat-valor { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+
+       .tecnico-footer { padding: 14px 16px; background: var(--surface2); display: flex; justify-content: space-between; align-items: center; }
+       .footer-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+       .footer-value { font-size: 1.3rem; font-weight: 800; color: var(--green); font-family: 'Space Mono', monospace; }
+
+       .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--faint); border-top-color: #fff; border-radius: 50%; vertical-align: middle; animation: spin 0.8s linear infinite; }
+       @keyframes spin { to { transform: rotate(360deg); } }
+   </style>
+</head>
+<body>
+
+<div class="container">
+
+   <div class="header-panel">
+       <h1 class="header-title">Painel Financeiro · TACEs</h1>
+       <p class="header-sub">Extrato de produção consolidado com base nos dados sincronizados com o servidor.</p>
+   </div>
+
+   <div class="controls-container">
+       <div>
+           <label style="display:block; font-size:0.8rem; color:var(--muted); margin-bottom:4px; font-weight: 600;">Data Início</label>
+           <input type="date" id="filtroDataInicio" class="search-input" style="min-width: 140px;">
+       </div>
+       <div>
+           <label style="display:block; font-size:0.8rem; color:var(--muted); margin-bottom:4px; font-weight: 600;">Data Fim</label>
+           <input type="date" id="filtroDataFim" class="search-input" style="min-width: 140px;">
+       </div>
+       <button class="btn-sync" onclick="buscarDadosFinanceiros()" id="btnBuscar">
+           🔍 Calcular Período
+       </button>
+   </div>
+
+   <div class="main-grid">
+       <div class="card" style="border-color: var(--blue-dim);">
+           <div class="card-label">Total Leituras (R$ 1,22)</div>
+           <div id="totalLeituras" class="card-value" style="color: var(--blue);">R$ 0,00</div>
+           <div class="card-accent" style="background: var(--blue);"></div>
+       </div>
+       <div class="card" style="border-color: var(--purple-dim);">
+           <div class="card-label">Total Ocorrências (R$ 1,15)</div>
+           <div id="totalOcorrencias" class="card-value" style="color: var(--purple);">R$ 0,00</div>
+           <div class="card-accent" style="background: var(--purple);"></div>
+       </div>
+       <div class="card" style="border-color: var(--cyan-dim);">
+           <div class="card-label">Total Comunicados (R$ 0,31)</div>
+           <div id="totalComunicados" class="card-value" style="color: var(--cyan);">R$ 0,00</div>
+           <div class="card-accent" style="background: var(--cyan);"></div>
+       </div>
+       <div class="card" style="border-color: var(--green); box-shadow: 0 0 20px rgba(74, 222, 128, 0.1);">
+           <div class="card-label" style="color: var(--green);">GRANDE TOTAL GERAL</div>
+           <div id="totalGeralFinal" class="card-value" style="color: var(--green);">R$ 0,00</div>
+           <div class="card-accent" style="background: var(--green);"></div>
+       </div>
+   </div>
+
+   <div id="tecnicosContainer" class="tecnicos-grid">
+       </div>
+
+</div>
+
+<script>
+   // ==========================================
+   // TABELA DE TARIFAS
+   // ==========================================
+   const VALOR_LEITURA = 1.22;
+   const VALOR_OCORRENCIA = 1.15;
+   const VALOR_COMUNICADO = 0.31;
+
+   // Mesma chave de segurança do seu painel original
+   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlLWRlbW8iLCJpYXQiOjE3ODM2NDg0NzAsImV4cCI6MjA5OTAwODQ3MH0.M1suC6hPN0Tjs8LfpGSgmonUBxy0larehPbQGSEyXVg';
+   const URL_API = window.location.origin + '/api-painel/rest/v1/auditorias?select=*&order=data_auditoria.asc';
+
+   // Formatação de moeda
+   const fm = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+   const getInitials = (nome) => nome.trim().split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
+
+   // Setar datas iniciais (Hoje)
+   document.addEventListener("DOMContentLoaded", () => {
+       const hoje = new Date().toISOString().split('T')[0];
+       document.getElementById('filtroDataInicio').value = hoje;
+       document.getElementById('filtroDataFim').value = hoje;
+   });
+
+   function buscarDadosFinanceiros() {
+       const dataInicio = document.getElementById('filtroDataInicio').value;
+       const dataFim = document.getElementById('filtroDataFim').value;
+       const btn = document.getElementById('btnBuscar');
+       
+       btn.innerHTML = `<span class="loader"></span> Calculando...`;
+       btn.style.pointerEvents = 'none';
+
+       fetch(URL_API, {
+           method: 'GET',
+           headers: {
+               'apikey': SUPABASE_KEY,
+               'Authorization': `Bearer ${SUPABASE_KEY}`,
+               'Content-Type': 'application/json'
+           }
+       })
+       .then(response => {
+           if (!response.ok) throw new Error('Erro ao conectar ao Supabase');
+           return response.json();
+       })
+       .then(dadosDB => {
+           btn.innerHTML = `🔍 Calcular Período`;
+           btn.style.pointerEvents = 'auto';
+
+           // Filtrar localmente as datas selecionadas
+           const dadosFiltrados = dadosDB.filter(registro => {
+               if (!registro.data_auditoria) return false;
+               const dataReg = registro.data_auditoria;
+               let pass = true;
+               if (dataInicio && dataReg < dataInicio) pass = false;
+               if (dataFim && dataReg > dataFim) pass = false;
+               return pass;
+           });
+
+           processarFinanceiro(dadosFiltrados);
+       })
+       .catch(error => {
+           console.error('Erro na consulta:', error);
+           alert('Falha ao buscar os dados no servidor.');
+           btn.innerHTML = `🔍 Calcular Período`;
+           btn.style.pointerEvents = 'auto';
+       });
+   }
+
+   function processarFinanceiro(registros) {
+       const container = document.getElementById('tecnicosContainer');
+       container.innerHTML = '';
+
+       if (registros.length === 0) {
+           container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--muted);">Nenhum dado salvo no servidor para este período.</div>`;
+           
+           document.getElementById('totalLeituras').innerText = "R$ 0,00";
+           document.getElementById('totalOcorrencias').innerText = "R$ 0,00";
+           document.getElementById('totalComunicados').innerText = "R$ 0,00";
+           document.getElementById('totalGeralFinal').innerText = "R$ 0,00";
+           return;
+       }
+
+       // 1. Agrupar produção por leiturista (Somando dias selecionados)
+       let consolidadoTaces = {};
+       
+       let somaGeralLeiturasRS = 0;
+       let somaGeralOcorrenciasRS = 0;
+       let somaGeralComunicadosRS = 0;
+
+       registros.forEach(registro => {
+           const dadosDia = registro.dados_completos;
+           if (!dadosDia) return;
+
+           for (let nomeTace in dadosDia) {
+               const info = dadosDia[nomeTace];
+               
+               if (!consolidadoTaces[nomeTace]) {
+                   consolidadoTaces[nomeTace] = {
+                       nome: nomeTace,
+                       leituras: 0,
+                       ocorrencias: 0,
+                       comunicados: 0
+                   };
+               }
+               
+               // Soma o total que foi gravado naquele dia no painel principal
+               consolidadoTaces[nomeTace].leituras += (info.leiturasTotal || 0);
+               consolidadoTaces[nomeTace].ocorrencias += (info.ocorrenciasAtivas || 0);
+               consolidadoTaces[nomeTace].comunicados += (info.comunicados || 0);
+           }
+       });
+
+       // 2. Converter objeto num array e ordenar alfabeticamente
+       const listaTaces = Object.values(consolidadoTaces).sort((a, b) => a.nome.localeCompare(b.nome));
+
+       // 3. Montar tela
+       listaTaces.forEach(tace => {
+           // Matemáticas
+           const valLeitura = tace.leituras * VALOR_LEITURA;
+           const valOcorrencia = tace.ocorrencias * VALOR_OCORRENCIA;
+           const valComunicado = tace.comunicados * VALOR_COMUNICADO;
+           const totalTace = valLeitura + valOcorrencia + valComunicado;
+
+           // Alimentar Globais
+           somaGeralLeiturasRS += valLeitura;
+           somaGeralOcorrenciasRS += valOcorrencia;
+           somaGeralComunicadosRS += valComunicado;
+
+           // HTML do Card
+           const card = document.createElement('div');
+           card.className = 'tecnico-card';
+           card.innerHTML = `
+               <div class="tecnico-header">
+                   <div class="tecnico-header-name">
+                       <div class="avatar">${getInitials(tace.nome)}</div>
+                       <span>${tace.nome}</span>
+                   </div>
+               </div>
+               
+               <div class="tecnico-stats">
+                   <div class="stat-box">
+                       <small style="color: var(--blue);">Lidos (x${VALOR_LEITURA})</small>
+                       <b style="color: var(--blue);">${tace.leituras}</b>
+                       <div class="stat-valor">${fm(valLeitura)}</div>
+                   </div>
+                   <div class="stat-box">
+                       <small style="color: var(--purple);">Ocorr. (x${VALOR_OCORRENCIA})</small>
+                       <b style="color: var(--purple);">${tace.ocorrencias}</b>
+                       <div class="stat-valor">${fm(valOcorrencia)}</div>
+                   </div>
+                   <div class="stat-box">
+                       <small style="color: var(--cyan);">Comun. (x${VALOR_COMUNICADO})</small>
+                       <b style="color: var(--cyan);">${tace.comunicados}</b>
+                       <div class="stat-valor">${fm(valComunicado)}</div>
+                   </div>
+               </div>
+
+               <div class="tecnico-footer">
+                   <span class="footer-label">Total a Pagar</span>
+                   <span class="footer-value">${fm(totalTace)}</span>
+               </div>
+           `;
+           container.appendChild(card);
+       });
+
+       // 4. Atualizar topo
+       const totalGeralEmpresa = somaGeralLeiturasRS + somaGeralOcorrenciasRS + somaGeralComunicadosRS;
+       
+       document.getElementById('totalLeituras').innerText = fm(somaGeralLeiturasRS);
+       document.getElementById('totalOcorrencias').innerText = fm(somaGeralOcorrenciasRS);
+       document.getElementById('totalComunicados').innerText = fm(somaGeralComunicadosRS);
+       document.getElementById('totalGeralFinal').innerText = fm(totalGeralEmpresa);
+   }
+</script>
+</body>
+</html>
